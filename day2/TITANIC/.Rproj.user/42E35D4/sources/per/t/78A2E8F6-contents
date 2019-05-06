@@ -1,0 +1,336 @@
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+devtools::install_github("hadley/ggplot2")
+devtools::install_github("sachsmc/plotROC")
+library(plotROC)
+
+theme_set(theme_gray(base_size = 15))
+
+lesioni <- read_excel("lesioni.xlsx")
+View(lesioni)
+
+str(lesioni)
+
+table(lesioni$lesione)
+
+
+d <- lesioni %>% mutate(tipo_misura= factor(`tipo misula`),
+                        lesione=factor(lesione),
+                        s_m=factor(s_m))
+
+str(d)
+
+d <- d %>% select(c(misura, tipo_misura,lesione, rapporto, s_m))
+str(d)
+
+levels(d$lesione)
+table(d$lesione)
+
+#levels(d$lesione) <- list(Benign Lesions=='benigne', 
+ #                         DCIS=='ca duttale',
+  #                        IDC=='duttale infiltrante', 
+   #                       ILC=='lobulare')
+
+
+
+
+levels(d$lesione) <- c("Benign Lesions", 
+                       "DCIS","IDC","ILC")
+
+table(d$lesione)
+
+
+#########################
+# ANALISI
+########################
+
+#Differenze sano v.s malato
+t.test(d$misura[d$s_m=="m"],d$misura[d$s_m=="s"])
+
+##########
+# CREO DATA BASE
+############
+
+
+#credo data base solo iodio e malati
+iodio <- d %>% filter(tipo_misura=="iodio" & s_m=="m")
+iodio
+
+#credo data base solo 70 e malati
+settanta <- d %>% filter(tipo_misura=="70" & s_m=="m")
+settanta
+
+#credo data base solo 40 e malati
+quaranta <- d %>% filter(tipo_misura=="40" & s_m=="m")
+quaranta
+
+######analisi valori assoluti
+
+a_iodio <- aov(misura ~ lesione,data = iodio)
+summary(a_iodio)
+posthoc_iodio <- TukeyHSD(x=a_iodio, conf.level=0.95)
+posthoc_iodio
+plot(posthoc_iodio)
+
+iodio %>% ggplot(aes(lesione,misura))+
+  labs(title="Iodio",
+  x ="Type", y = "Iodine concentration (mg/ml)")+
+geom_boxplot(fill=c("green", "orange", "blue","red"), alpha=0.15)
+
+
+
+
+
+a_quaranta <- aov(misura ~ lesione,data = iodio)
+summary(a_quaranta)
+posthoc_quaranta <- TukeyHSD(x=a_quaranta, conf.level=0.95)
+posthoc_quaranta
+plot(posthoc_quaranta)
+
+
+
+quaranta %>% ggplot(aes(lesione,misura))+
+  labs(title="CT Value",
+       x ="Type", y = "CT Value (HU) 40")+
+  geom_boxplot(fill=c("green", "orange", "blue","red"), alpha=0.15)
+
+
+a_settanta <- aov(misura ~ lesione,data = iodio)
+summary(a_settanta)
+posthoc_settanta <- TukeyHSD(x=a_settanta, conf.level=0.95)
+posthoc_settanta
+plot(posthoc_settanta)
+
+
+settanta %>% ggplot(aes(lesione,misura))+
+  labs(title="CT Value",
+       x ="Type", y = "CT Value (HU) 70")+
+  geom_boxplot(fill=c("green", "orange", "blue","red"), alpha=0.15)
+
+
+
+###########
+# RAPPORTI
+######
+
+
+
+a_iodio_rapp <- aov(rapporto ~ lesione,data = iodio)
+summary(a_iodio_rapp)
+posthoc_iodio_rapp <- TukeyHSD(x=a_iodio_rapp, conf.level=0.95)
+posthoc_iodio_rapp
+plot(posthoc_iodio_rapp)
+
+
+iodio %>% ggplot(aes(lesione,rapporto))+
+  labs(title="Iodio",
+       x ="Type", y = "Iodine concentration (mg/ml)")+
+  geom_boxplot(fill=c("green", "orange", "blue","red"), alpha=0.15)
+
+
+
+a_quaranta_rapp <- aov(rapporto ~ lesione,data = iodio)
+summary(a_quaranta_rapp)
+posthoc_quaranta_rapp <- TukeyHSD(x=a_quaranta_rapp , conf.level=0.95)
+posthoc_quaranta_rapp
+plot(posthoc_quaranta_rapp)
+
+
+
+quaranta %>% ggplot(aes(lesione,rapporto))+
+  labs(title="CT Value",
+       x ="Type", y = "CT Value (HU) 40")+
+  geom_boxplot(fill=c("green", "orange", "blue","red"), alpha=0.15)
+
+
+a_settanta_rapp <- aov(rapporto ~ lesione,data = iodio)
+summary(a_settanta_rapp)
+posthoc_settanta_rapp <- TukeyHSD(x=a_settanta_rapp, conf.level=0.95)
+posthoc_settanta_rapp
+plot(posthoc_settanta_rapp)
+
+
+settanta %>% ggplot(aes(lesione,rapporto))+
+  labs(title="CT Value",
+       x ="Type", y = "CT Value (HU) 70")+
+  geom_boxplot(fill=c("green", "orange", "blue","red"), alpha=0.15)
+
+
+
+#############
+#roc curve iodio
+
+##################################################################
+#
+# CURVE 
+# ROC
+#
+##################################################################
+
+
+#1) roc curve iodio
+
+head(iodio)
+ioRoc <- iodio %>% mutate(infiltr=ifelse(lesione=="IDC",1,0))
+ioRoc
+
+#RAPPORTI
+calculate_roc(ioRoc$rapporto,ioRoc$infiltr,0.05)
+basicplot <- ggplot(ioRoc, aes(d = infiltr, m =rapporto)) + geom_roc()
+basicplot + labs(title="IODIO RATIOS",subtitle="IDC Vs. Ohters",
+       x ="False Positive Rate", y = "True Positive Rate")+
+  annotate("text", x = .60, y = .55, 
+           label = paste("AUC =", round(calc_auc(basicplot)$AUC, 2))) +
+  scale_x_continuous("1 - Specificity", breaks = seq(0, 1, by = .1))
+
+
+#VAL ASS
+calculate_roc(ioRoc$misura,ioRoc$infiltr,0.05)
+basicplot <- ggplot(ioRoc, aes(d = infiltr, m =misura)) + geom_roc()
+basicplot + labs(title="IODIO VALUE",subtitle="IDC Vs. Ohters",
+                 x ="False Positive Rate", y = "True Positive Rate")+
+  annotate("text", x = .60, y = .55, 
+           label = paste("AUC =", round(calc_auc(basicplot)$AUC, 2))) +
+  scale_x_continuous("1 - Specificity", breaks = seq(0, 1, by = .1))
+
+
+head(iodio)
+ioRoc <- iodio %>% mutate(infiltr=ifelse(lesione%in%c("IDC","ILC"),1,0))
+
+#RAPPORTI
+calculate_roc(ioRoc$rapporto,ioRoc$infiltr,0.05)
+basicplot <- ggplot(ioRoc, aes(d = infiltr, m =rapporto)) + geom_roc()
+basicplot + labs(title="IODIO RATIOS",subtitle="IDC+ILC Vs. Ohters",
+                 x ="False Positive Rate", y = "True Positive Rate")+
+  annotate("text", x = .60, y = .55, 
+           label = paste("AUC =", round(calc_auc(basicplot)$AUC, 2))) +
+  scale_x_continuous("1 - Specificity", breaks = seq(0, 1, by = .1))
+
+
+
+#VAL ASS
+calculate_roc(ioRoc$misura,ioRoc$infiltr,0.05)
+basicplot <- ggplot(ioRoc, aes(d = infiltr, m =misura)) + geom_roc()
+basicplot + labs(title="IODIO VALUE",subtitle="IDC+ILC Vs. Ohters",
+                 x ="False Positive Rate", y = "True Positive Rate") +
+  annotate("text", x = .60, y = .55, 
+           label = paste("AUC =", round(calc_auc(basicplot)$AUC, 2))) +
+  scale_x_continuous("1 - Specificity", breaks = seq(0, 1, by = .1))
+
+
+
+#################################?
+#1) roc curve 40
+#############################
+
+head(quaranta)
+ioRoc <- quaranta %>% mutate(infiltr=ifelse(lesione=="IDC",1,0))
+ioRoc
+
+#RAPPORTI
+calculate_roc(ioRoc$rapporto,ioRoc$infiltr,0.05)
+basicplot <- ggplot(ioRoc, aes(d = infiltr, m =rapporto)) + geom_roc()
+basicplot + labs(title="(HU) 40 RATIOS",subtitle="IDC Vs. Ohters",
+                 x ="False Positive Rate", y = "True Positive Rate")+
+  annotate("text", x = .60, y = .55, 
+           label = paste("AUC =", round(calc_auc(basicplot)$AUC, 2))) +
+  scale_x_continuous("1 - Specificity", breaks = seq(0, 1, by = .1))
+
+
+#VAL ASS
+calculate_roc(ioRoc$misura,ioRoc$infiltr,0.05)
+basicplot <- ggplot(ioRoc, aes(d = infiltr, m =misura)) + geom_roc()
+basicplot + labs(title="(HU) 40 VALUE",subtitle="IDC Vs. Ohters",
+                 x ="False Positive Rate", y = "True Positive Rate")+
+  annotate("text", x = .60, y = .55, 
+           label = paste("AUC =", round(calc_auc(basicplot)$AUC, 2))) +
+  scale_x_continuous("1 - Specificity", breaks = seq(0, 1, by = .1))
+
+
+head(iodio)
+ioRoc <- quaranta %>% mutate(infiltr=ifelse(lesione%in%c("IDC","ILC"),1,0))
+ioRoc
+View(ioRoc)
+
+
+#RAPPORTI
+calculate_roc(ioRoc$rapporto,ioRoc$infiltr,0.05)
+basicplot <- ggplot(ioRoc, aes(d = infiltr, m =rapporto)) + geom_roc()
+basicplot + labs(title="(HU) 40 RATIOS",subtitle="IDC+ILC Vs. Ohters",
+                 x ="False Positive Rate", y = "True Positive Rate")+
+  annotate("text", x = .60, y = .55, 
+           label = paste("AUC =", round(calc_auc(basicplot)$AUC, 2))) +
+  scale_x_continuous("1 - Specificity", breaks = seq(0, 1, by = .1))
+
+
+
+#VAL ASS
+calculate_roc(ioRoc$misura,ioRoc$infiltr,0.05)
+basicplot <- ggplot(ioRoc, aes(d = infiltr, m =misura)) + geom_roc()
+basicplot + labs(title="(HU) 40 VALUE",subtitle="IDC+ILC Vs. Ohters",
+                 x ="False Positive Rate", y = "True Positive Rate") +
+  annotate("text", x = .60, y = .55, 
+           label = paste("AUC =", round(calc_auc(basicplot)$AUC, 2))) +
+  scale_x_continuous("1 - Specificity", breaks = seq(0, 1, by = .1))
+
+
+
+
+
+
+
+#1) roc curve 70
+
+
+head(settanta)
+ioRoc <- settanta %>% mutate(infiltr=ifelse(lesione=="IDC",1,0))
+ioRoc
+
+#RAPPORTI
+calculate_roc(ioRoc$rapporto,ioRoc$infiltr,0.05)
+basicplot <- ggplot(ioRoc, aes(d = infiltr, m =rapporto)) + geom_roc()
+basicplot + labs(title="(HU) 70 RATIOS",subtitle="IDC Vs. Ohters",
+                 x ="False Positive Rate", y = "True Positive Rate")+
+  annotate("text", x = .60, y = .55, 
+           label = paste("AUC =", round(calc_auc(basicplot)$AUC, 2))) +
+  scale_x_continuous("1 - Specificity", breaks = seq(0, 1, by = .1))
+
+
+#VAL ASS
+calculate_roc(ioRoc$misura,ioRoc$infiltr,0.05)
+basicplot <- ggplot(ioRoc, aes(d = infiltr, m =misura)) + geom_roc()
+basicplot + labs(title="(HU) 70 VALUE",subtitle="IDC Vs. Ohters",
+                 x ="False Positive Rate", y = "True Positive Rate")+
+  annotate("text", x = .60, y = .55, 
+           label = paste("AUC =", round(calc_auc(basicplot)$AUC, 2))) +
+  scale_x_continuous("1 - Specificity", breaks = seq(0, 1, by = .1))
+
+
+head(iodio)
+ioRoc <- settanta %>% mutate(infiltr=ifelse(lesione%in%c("IDC","ILC"),1,0))
+ioRoc
+View(ioRoc)
+
+
+#RAPPORTI
+calculate_roc(ioRoc$rapporto,ioRoc$infiltr,0.05)
+basicplot <- ggplot(ioRoc, aes(d = infiltr, m =rapporto)) + geom_roc()
+basicplot + labs(title="(HU) 70 RATIOS",subtitle="IDC+ILC Vs. Ohters",
+                 x ="False Positive Rate", y = "True Positive Rate")+
+  annotate("text", x = .60, y = .55, 
+           label = paste("AUC =", round(calc_auc(basicplot)$AUC, 2))) +
+  scale_x_continuous("1 - Specificity", breaks = seq(0, 1, by = .1))
+
+
+
+#VAL ASS
+calculate_roc(ioRoc$misura,ioRoc$infiltr,0.05)
+basicplot <- ggplot(ioRoc, aes(d = infiltr, m =misura)) + geom_roc()
+basicplot + labs(title="(HU) 70 VALUE",subtitle="IDC+ILC Vs. Ohters",
+                 x ="False Positive Rate", y = "True Positive Rate") +
+  annotate("text", x = .60, y = .55, 
+           label = paste("AUC =", round(calc_auc(basicplot)$AUC, 2))) +
+  scale_x_continuous("1 - Specificity", breaks = seq(0, 1, by = .1))
+
+

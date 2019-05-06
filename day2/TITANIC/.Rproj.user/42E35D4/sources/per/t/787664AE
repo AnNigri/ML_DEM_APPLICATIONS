@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1557064694029.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "242062668",
+    "id" : "787664AE",
+    "lastKnownWriteTime" : 1557065911,
+    "last_content_update" : 1557065911936,
+    "path" : "C:/Users/Andrea/Desktop/seminario ML DEMOGRAPHY/TITANIC/titanic.R",
+    "project_path" : "titanic.R",
+    "properties" : {
+        "cursorPosition" : "45,0",
+        "scrollLine" : "32",
+        "tempName" : "Untitled2"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
