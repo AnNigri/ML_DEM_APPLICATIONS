@@ -26,7 +26,6 @@ mae = function(truth, prediction){
 }
 
 
-
 ###--------------------------------------------------------------------------###
 #                                                                             ##
 # MODELLO DOUBLE GAP (DG) - Pasacrius et al. (2017)                           ##
@@ -35,45 +34,70 @@ mae = function(truth, prediction){
 
 # Caricamento dei dati coerentemente con la strutturazione del package del DG
 
+devtools::install_github("mpascariu/MortalityGaps")
 devtools::install_github("mpascariu/MortalityLaws")
+install.packages("MortalityLaws")
+install.packages("MortalityGaps")
 library(MortalityLaws)
+library(MortalityGaps)
 library(dplyr)
 
 
-user_ = 'andrea.nigri@student.unisi.it'
-password_ = 'Dottorato17'
+
+#user_ = 'andrea.nigri@student.unisi.it'
+#password_ = 'Dottorato17'
 
 # Download HMD data. Take approx 1m30s (depending on the internet speed).
-HMD_LT_F <- ReadHMD(what = 'LT_f',
-                    interval = '1x1',
-                    username = user_,
-                    password = password_,
-                    save = FALSE)
+#HMD_LT_F <- ReadHMD(what = 'LT_f',
+#                    interval = '1x1',
+#                   username = user_,
+#                   password = password_,
+#                   save = TRUE)
 
-HMD_LT_M <- ReadHMD(what = 'LT_m',
-                    interval = '1x1',
-                    username = user_,
-                    password = password_,
-                    save = FALSE)
+#HMD_LT_M <- ReadHMD(what = 'LT_m',
+#                   interval = '1x1',
+#                   username = user_,
+#                   password = password_,
+#                   save = TRUE)
 
 # cnu = countries not used  
 # these are populations that need to be taken out of the dataset
-cnu <- c("FRACNP","DEUTNP", "NZL_NM", "NZL_MA",
-         "GBR_NP","GBRCENW", "GBR_NIR", "CHL", "LUX", "HRV")
+#cnu <- c("FRACNP","DEUTNP", "NZL_NM", "NZL_MA",
+#        "GBR_NP","GBRCENW", "GBR_NIR", "CHL", "LUX", "HRV")
 # Da utilizzare solo se si vuole fissare il periodo storico dell'analisi
 #LTF <- HMD_LT_F$data %>% filter(Year %in% years & !(country %in% cnu))
 #LTM <- HMD_LT_M$data %>% filter(Year %in% years & !(country %in% cnu))
-LTF <- HMD_LT_F$data %>% filter( !(country %in% cnu))
-LTM <- HMD_LT_M$data %>% filter( !(country %in% cnu))
+##############
+#DATI CARICATI ON LINE
+#LTF <- HMD_LT_F$data %>% filter( !(country %in% cnu))
+#LTM <- HMD_LT_M$data %>% filter( !(country %in% cnu))
+
+load(file = "HMD_LT_f.Rdata")
+load(file = "HMD_LT_m.Rdata")
+
+LTF <- HMD_LT_f$data %>% filter( !(country %in% cnu))
+LTM <- HMD_LT_m$data %>% filter( !(country %in% cnu))
+
 
 exF <- LTF %>% filter(Age %in% c(0, 65)) %>% select(country, Year, Age, ex)
 exM <- LTM %>% filter(Age %in% c(0, 65)) %>% select(country, Year, Age, ex)
+# verify that the two data.frames are of equal length
+nrow(exF) == nrow(exM)
+ncol(exF) == ncol(exM)
 
+MortalityGaps.data <- structure(class = "MortalityGaps.data", list(exF = exF, exM = exM))
+
+head(exF)
+head(exM)
 
 ###-------------------------------------------------###
 #             Analisi life exp a 65                   #
 ###-------------------------------------------------###
 
+exM_65<- LTM %>% filter(Age ==65)
+
+# Creo l'oggetto contenente le life exp a 65 anni per ogni anni e solo per l'Australia 
+lf_M <-exM_65%>% filter(country=="ITA")
 
 # Selezione della life exp a 65 anni sfruttando le funzioni di lettura del pacchetto di Pascarius
 # in particolare questo comando carica il valore della life table a 65 anni
