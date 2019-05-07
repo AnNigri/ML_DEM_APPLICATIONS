@@ -62,8 +62,6 @@ library(dplyr)
 
 # cnu = countries not used  
 # these are populations that need to be taken out of the dataset
-#cnu <- c("FRACNP","DEUTNP", "NZL_NM", "NZL_MA",
-#        "GBR_NP","GBRCENW", "GBR_NIR", "CHL", "LUX", "HRV")
 # Da utilizzare solo se si vuole fissare il periodo storico dell'analisi
 #LTF <- HMD_LT_F$data %>% filter(Year %in% years & !(country %in% cnu))
 #LTM <- HMD_LT_M$data %>% filter(Year %in% years & !(country %in% cnu))
@@ -74,6 +72,8 @@ library(dplyr)
 
 load(file = "HMD_LT_f.Rdata")
 load(file = "HMD_LT_m.Rdata")
+cnu <- c("FRACNP","DEUTNP", "NZL_NM", "NZL_MA",
+         "GBR_NP","GBRCENW", "GBR_NIR", "CHL", "LUX", "HRV")
 
 LTF <- HMD_LT_f$data %>% filter( !(country %in% cnu))
 LTM <- HMD_LT_m$data %>% filter( !(country %in% cnu))
