@@ -42,8 +42,6 @@ library(MortalityLaws)
 library(MortalityGaps)
 library(dplyr)
 
-
-
 #user_ = 'andrea.nigri@student.unisi.it'
 #password_ = 'Dottorato17'
 
@@ -182,7 +180,7 @@ for( k in 1:length(seed)){
     
     model <- keras_model_sequential() 
     model%>%
-      layer_lstm(50,batch_input_shape = c(batch_size, X_shape2, X_shape3),activation='relu', recurrent_activation = "tanh")%>%
+      layer_lstm(30,batch_input_shape = c(batch_size, X_shape2, X_shape3),activation='relu', recurrent_activation = "tanh")%>%
       layer_dense(units = 1)
     
     model %>% compile(
@@ -198,7 +196,7 @@ for( k in 1:length(seed)){
   model %>% summary()
   h <- model %>% fit(x_train, 
                      y_train,
-                     epochs=8,
+                     epochs=4,
                      batch_size=1, 
                      verbose=0, 
                      shuffle=FALSE)
@@ -382,5 +380,4 @@ sp2 <- Sp+geom_line(aes(year,lstm),color="red",size=2.5,alpha=0.75)+
   geom_line(aes(year,lf_lc),color="blue",size=2.5,alpha=0.75)
 sp2
 
-ggsave(sp2,filename = "AUS_Female.jpeg",width = 15,height = 7.5)
 
