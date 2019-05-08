@@ -35,8 +35,8 @@ mae = function(truth, prediction){
 # Caricamento dei dati coerentemente con la strutturazione del package del DG
 
 devtools::install_github("mpascariu/MortalityGaps")
-devtools::install_github("mpascariu/MortalityLaws")
-install.packages("MortalityLaws")
+#devtools::install_github("mpascariu/MortalityLaws")
+#install.packages("MortalityLaws")
 install.packages("MortalityGaps")
 library(MortalityLaws)
 library(MortalityGaps)
@@ -276,7 +276,7 @@ P65
 # Plot the results
 plot(P65)
 
-plot(P65$pred.values$exm)
+plot(P65$pred.values$exf)
 
 pred_dg_m65 <- P65$pred.values$exm
 pred_dg_f65 <- P65$pred.values$exf
