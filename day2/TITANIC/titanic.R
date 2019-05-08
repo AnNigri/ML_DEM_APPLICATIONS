@@ -106,6 +106,7 @@ titanic %>%
   xlab("Age") +
   ylab("Total Count")
 
+library(caret)
 train.model.ind <- createDataPartition(titanic$survived, p = 0.8, list = FALSE)
 train <- titanic[train.model.ind,]
 test <- titanic[-train.model.ind,]
